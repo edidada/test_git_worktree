@@ -1,0 +1,10 @@
+# 各 worktree 的本地依赖与构建产物互不共享，按工位各自忽略
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
+Thumbs.db
