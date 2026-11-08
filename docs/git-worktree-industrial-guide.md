@@ -368,3 +368,53 @@ git worktree remove [-f] <worktree>
 git worktree repair [<path>...]
 git worktree unlock <worktree>
 ```
+
+---
+
+## 附录 B：本机实机演示输出（`bash scripts/demo-worktree.sh`）
+
+以下为 2026-11-08 在本仓库真实执行的输出节选（提交号因机器而异）：
+
+```text
+主工作区 : D:/develops/git/github/test_git_worktree
+工位容器 : D:/develops/git/github/test_git_worktree_wt
+
+=== 3. 验证：所有工位共享同一对象库（无需 fetch / push） ===
+  feature-agents HEAD      : 6550b99debbef16c46995332ddddff98dc01ca96
+  主工作区直接读取该对象   : commit  (commit = 共享对象库)
+  main  --git-common-dir   : D:/develops/git/github/test_git_worktree/.git
+  agent --git-common-dir   : D:/develops/git/github/test_git_worktree/.git
+  主工作区 HEAD 仍停留在   : main
+
+=== 4. 线上热修复：零上下文切换（主工作区不 checkout、不 stash） ===
+  [add ] hotfix/1.0.1 -> .../test_git_worktree_wt/hotfix-1.0.1
+  修复内容: VERSION = "1.0.1"
+Updating fe7c7dc..628096a
+Fast-forward
+ src/app.py | 2 +-
+  主工作区合入后版本: VERSION = "1.0.1"
+  主工作区仍是分支: main
+
+=== 6. 巡检 + 锁定常驻工位（git worktree list -v） ===
+  D:/develops/git/github/test_git_worktree                    628096a [main]
+  D:/develops/git/github/test_git_worktree_wt/develop         fe7c7dc [develop]
+        locked: 常驻集成分支，禁止 prune
+  D:/develops/git/github/test_git_worktree_wt/feature-agents  6550b99 [feature/parallel-agents]
+  D:/develops/git/github/test_git_worktree_wt/feature-billing 82f3176 [feature/billing]
+  D:/develops/git/github/test_git_worktree_wt/hotfix-1.0.1    628096a [hotfix/1.0.1]
+  D:/develops/git/github/test_git_worktree_wt/review-pr-42    628096a (detached HEAD)
+
+=== 7. 规范回收：unlock -> remove -> prune ===
+  （review-pr-42 已从列表消失，detached 工位被正确回收）
+
+=== 完成 ===
+  分支清单: develop / feature/billing / feature/parallel-agents / hotfix/1.0.1 / main
+  tag 清单: v1.0.1
+```
+
+四个值得核对的观察点：
+
+1. 主工作区 HEAD **全程是 `main`**，没有 `checkout`、没有 `stash` —— 热修复在独立工位完成。
+2. `feature/parallel-agents` 的提交对象在主工作区可直接 `git cat-file -t` 读到 `commit` —— 证明对象库共享，无需 `fetch`/`push`。
+3. 两个工位的 `--git-common-dir` 完全相同，都指向主工作区的 `.git`。
+4. `git worktree remove` 后 detached 工位从 `list` 中消失，`prune` 清掉残留元数据。
