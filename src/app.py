@@ -1,6 +1,6 @@
 """最小示例应用：让各 worktree 分支产生真实的 diff。"""
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 
 def greet(name: str) -> str:
